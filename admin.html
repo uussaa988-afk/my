@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ-панель — Розыгрыш билетов</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg: #0d120a;
+  --card: rgba(255,255,255,0.05);
+  --border: rgba(255,255,255,0.15);
+  --white: #f4fdf4;
+  --gray: rgba(255,255,255,0.7);
+  --dim: rgba(255,255,255,0.45);
+  --green: #8fd165;
+  --yellow: #d4a940;
+  --red: #e85656;
+}
+body{
+  font-family:'Inter',system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--white);
+  min-height:100vh;
+  padding:40px;
+  -webkit-font-smoothing:antialiased;
+}
+.container{max-width:1200px;margin:0 auto}
+h1{font-size:2rem;font-weight:700;margin-bottom:8px}
+.subtitle{color:var(--gray);font-size:0.9rem;margin-bottom:32px}
+
+.login-card{
+  max-width:400px;
+  margin:100px auto;
+  padding:48px;
+  border:1px solid var(--border);
+  border-radius:24px;
+  background:rgba(255,255,255,0.03);
+  text-align:center;
+}
+.login-card h2{font-size:1.5rem;margin-bottom:24px}
+.login-card input{
+  width:100%;
+  padding:14px 20px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:rgba(0,0,0,0.3);
+  color:var(--white);
+  font-size:1rem;
+  font-family:inherit;
+  margin-bottom:16px;
+  outline:none;
+}
+.login-card input:focus{border-color:var(--yellow)}
+.login-card button{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  border:none;
+  background:var(--yellow);
+  color:#1a1a1a;
+  font-weight:600;
+  font-size:0.95rem;
+  cursor:pointer;
+  font-family:inherit;
+}
+.login-card button:hover{opacity:0.9}
+.error{color:var(--red);font-size:0.85rem;margin-top:12px}
+
+.stats-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:16px;
+  margin-bottom:32px;
+}
+.stat-card{
+  padding:24px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:rgba(255,255,255,0.02);
+}
+.stat-card .val{font-size:2.5rem;font-weight:700;margin-bottom:4px}
+.stat-card .lbl{font-size:0.75rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+
+.table-wrap{
+  border:1px solid var(--border);
+  border-radius:16px;
+  overflow-x:auto;
+  margin-bottom:32px;
+  -webkit-overflow-scrolling:touch;
+}
+table{width:100%;border-collapse:collapse}
+th{
+  background:rgba(255,255,255,0.05);
+  padding:14px 16px;
+  text-align:left;
+  font-size:0.75rem;
+  text-transform:uppercase;
+  letter-spacing:1px;
+  color:var(--dim);
+  font-weight:600;
+}
+td{
+  padding:12px 16px;
+  border-top:1px solid rgba(255,255,255,0.05);
+  font-size:0.85rem;
+  color:var(--gray);
+  white-space:nowrap;
+}
+td.copyable{cursor:pointer;position:relative}
+td.copyable:hover{color:var(--yellow)}
+.copy-toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:var(--green);color:#1a1a1a;padding:8px 20px;
+  border-radius:8px;font-size:0.85rem;font-weight:600;
+  z-index:9999;opacity:0;transition:opacity 0.3s;
+}
+.copy-toast.show{opacity:1}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:100px;
+  font-size:0.7rem;
+  font-weight:600;
+}
+.badge-bio{background:rgba(143,209,101,0.15);color:var(--green)}
+.badge-phys{background:rgba(212,169,64,0.15);color:var(--yellow)}
+
+.refresh-btn{
+  padding:10px 24px;
+  border-radius:100px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--white);
+  font-size:0.85rem;
+  font-weight:500;
+  cursor:pointer;
+  font-family:inherit;
+  margin-bottom:24px;
+}
+.refresh-btn:hover{background:rgba(255,255,255,0.05)}
+
+.tab-bar{display:flex;gap:8px;margin-bottom:24px}
+.tab-btn{
+  padding:10px 24px;
+  border-radius:100px;
+  border:1px solid var(--border);
+  background:transparent;
+  color:var(--gray);
+  font-size:0.85rem;
+  font-weight:500;
+  cursor:pointer;
+  font-family:inherit;
+  transition:0.3s;
+}
+.tab-btn:hover{background:rgba(255,255,255,0.05);color:var(--white)}
+.tab-btn.active{background:var(--white);color:#1a1a1a;border-color:var(--white);font-weight:600}
+
+.section-title{font-size:0.8rem;letter-spacing:2px;text-transform:uppercase;color:var(--dim);margin:24px 0 16px;font-weight:600}
+
+@media(max-width:600px){
+  body{padding:16px}
+  .stats-grid{grid-template-columns:1fr 1fr}
+  .stat-card{padding:16px}
+  .stat-card .val{font-size:1.8rem}
+  td,th{padding:8px 10px;font-size:0.75rem}
+}
+</style>
+</head>
+<body>
+<div class="copy-toast" id="copy-toast">Скопировано!</div>
+<div class="container">
+  <div id="login-view">
+    <div class="login-card">
+      <h2>🔒 Админ-панель</h2>
+      <input type="password" id="password-input" placeholder="Пароль администратора" onkeydown="if(event.key==='Enter')doLogin()">
+      <button onclick="doLogin()">Войти</button>
+      <div class="error" id="login-error"></div>
+    </div>
+  </div>
+
+  <div id="admin-view" style="display:none">
+    <h1>Админ-панель розыгрыша</h1>
+    <p class="subtitle">Управление пользователями и билетами</p>
+
+    <button class="refresh-btn" onclick="loadData()">↻ Обновить данные</button>
+
+    <div class="stats-grid" id="stats-grid"></div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" id="tab-tickets" onclick="showTab('tickets')">Билеты</button>
+      <button class="tab-btn" id="tab-users" onclick="showTab('users')">Пользователи</button>
+    </div>
+
+    <div id="tickets-section">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID билета</th>
+              <th>Ник</th>
+              <th>Код доступа</th>
+              <th>Предмет</th>
+              <th>Блок</th>
+              <th>Результат</th>
+              <th>IP</th>
+              <th>Устройство</th>
+              <th>Fingerprint</th>
+              <th>Дата</th>
+            </tr>
+          </thead>
+          <tbody id="tickets-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="users-section" style="display:none">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Ник</th>
+              <th>Код доступа</th>
+              <th>Билетов</th>
+              <th>Предметы</th>
+              <th>Дата регистрации</th>
+            </tr>
+          </thead>
+          <tbody id="users-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+let adminPassword = '';
+let cachedTickets = [];
+let cachedUsers = [];
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function doLogin() {
+  adminPassword = document.getElementById('password-input').value;
+  loadData();
+}
+
+function showTab(tab) {
+  document.getElementById('tickets-section').style.display = tab === 'tickets' ? 'block' : 'none';
+  document.getElementById('users-section').style.display = tab === 'users' ? 'block' : 'none';
+  document.getElementById('tab-tickets').className = 'tab-btn' + (tab === 'tickets' ? ' active' : '');
+  document.getElementById('tab-users').className = 'tab-btn' + (tab === 'users' ? ' active' : '');
+}
+
+async function loadData() {
+  try {
+    const headers = { 'Authorization': `Bearer ${adminPassword}` };
+    const [ticketsResp, usersResp] = await Promise.all([
+      fetch(`${API}/api/tickets`, { headers }),
+      fetch(`${API}/api/users`, { headers })
+    ]);
+
+    if (!ticketsResp.ok) {
+      document.getElementById('login-error').textContent = 'Неверный пароль';
+      return;
+    }
+
+    const ticketsData = await ticketsResp.json();
+    cachedTickets = ticketsData.tickets || [];
+
+    let usersData = { users: [] };
+    if (usersResp.ok) {
+      usersData = await usersResp.json();
+    }
+    cachedUsers = usersData.users || [];
+
+    document.getElementById('login-view').style.display = 'none';
+    document.getElementById('admin-view').style.display = 'block';
+
+    renderStats();
+    renderTickets();
+    renderUsers();
+  } catch (e) {
+    document.getElementById('login-error').textContent = 'Ошибка подключения к серверу';
+  }
+}
+
+function renderStats() {
+  const tickets = cachedTickets;
+  const users = cachedUsers;
+  const uniqueIPs = new Set(tickets.map(t => t.ip));
+  const uniqueDevices = new Set(tickets.map(t => t.fingerprint));
+  const biochemTickets = tickets.filter(t => t.subject === 'biochem').length;
+  const physTickets = tickets.filter(t => t.subject === 'physiology').length;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card"><div class="val">${tickets.length}</div><div class="lbl">Всего билетов</div></div>
+    <div class="stat-card"><div class="val">${users.length}</div><div class="lbl">Пользователей</div></div>
+    <div class="stat-card"><div class="val">${uniqueIPs.size}</div><div class="lbl">Уникальных IP</div></div>
+    <div class="stat-card"><div class="val">${uniqueDevices.size}</div><div class="lbl">Устройств</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--green)">${biochemTickets}</div><div class="lbl">Биохимия</div></div>
+    <div class="stat-card"><div class="val" style="color:var(--yellow)">${physTickets}</div><div class="lbl">Физиология</div></div>
+  `;
+}
+
+function renderTickets() {
+  const tbody = document.getElementById('tickets-body');
+  tbody.innerHTML = '';
+  cachedTickets.slice().reverse().forEach(t => {
+    const date = new Date(t.issued_at).toLocaleString('ru');
+    const subjectName = t.subject === 'biochem' ? 'Биохимия' : 'Физиология';
+    const badgeClass = t.subject === 'biochem' ? 'badge-bio' : 'badge-phys';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="copyable" onclick="copyText('${escHtml(t.id)}')"><strong>${escHtml(t.id)}</strong></td>
+      <td><strong>${escHtml(t.nickname || '-')}</strong></td>
+      <td class="copyable" onclick="copyText('${escHtml(t.access_code || '-')}')">${escHtml(t.access_code || '-')}</td>
+      <td><span class="badge ${badgeClass}">${subjectName}</span></td>
+      <td>Блок ${parseInt(t.block_number)}</td>
+      <td>${parseInt(t.score)}/${parseInt(t.total)} (${parseFloat(t.percentage)}%)</td>
+      <td>${escHtml(t.ip)}</td>
+      <td title="${escHtml(t.device_info)}">${escHtml((t.device_info || '').substring(0, 30))}...</td>
+      <td>${escHtml(t.fingerprint)}</td>
+      <td>${escHtml(date)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderUsers() {
+  const tbody = document.getElementById('users-body');
+  tbody.innerHTML = '';
+  cachedUsers.forEach(u => {
+    const date = new Date(u.registered_at).toLocaleString('ru');
+    const ticketCount = u.tickets_count || 0;
+    const subjects = new Set((u.tickets || []).map(t => t.subject));
+    const subjectBadges = Array.from(subjects).map(s => {
+      const name = s === 'biochem' ? 'Биохимия' : 'Физиология';
+      const cls = s === 'biochem' ? 'badge-bio' : 'badge-phys';
+      return `<span class="badge ${cls}">${name}</span>`;
+    }).join(' ') || '-';
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${escHtml(u.id)}</td>
+      <td><strong>${escHtml(u.nickname)}</strong></td>
+      <td class="copyable" onclick="copyText('${escHtml(u.access_code)}')" style="font-family:monospace;letter-spacing:1px">${escHtml(u.access_code)}</td>
+      <td><strong>${ticketCount}</strong></td>
+      <td>${subjectBadges}</td>
+      <td>${escHtml(date)}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const toast = document.getElementById('copy-toast');
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1500);
+  });
+}
+</script>
+</body>
+</html>
