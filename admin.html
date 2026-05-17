@@ -209,6 +209,8 @@ tr:hover td{background:rgba(255,255,255,0.02)}
               <th>Устройство</th>
               <th>Fingerprint</th>
               <th>Дата</th>
+              <th>Начало теста</th>
+              <th>Конец теста</th>
             </tr>
           </thead>
           <tbody id="tickets-body"></tbody>
@@ -223,6 +225,7 @@ tr:hover td{background:rgba(255,255,255,0.02)}
             <tr>
               <th>ID</th>
               <th>Ник</th>
+              <th>Телефон</th>
               <th>Код доступа</th>
               <th>Билетов</th>
               <th>Предметы</th>
@@ -330,6 +333,8 @@ function renderTickets() {
       <td title="${escHtml(t.device_info)}">${escHtml((t.device_info || '').substring(0, 30))}...</td>
       <td>${escHtml(t.fingerprint)}</td>
       <td>${escHtml(date)}</td>
+      <td>${t.started_at ? escHtml(new Date(t.started_at).toLocaleString('ru')) : '-'}</td>
+      <td>${t.finished_at ? escHtml(new Date(t.finished_at).toLocaleString('ru')) : '-'}</td>
     `;
     tbody.appendChild(tr);
   });
@@ -352,6 +357,7 @@ function renderUsers() {
     tr.innerHTML = `
       <td>${escHtml(u.id)}</td>
       <td><strong>${escHtml(u.nickname)}</strong></td>
+      <td>${escHtml(u.phone || '-')}</td>
       <td class="copyable" onclick="copyText('${escHtml(u.access_code)}')" style="font-family:monospace;letter-spacing:1px">${escHtml(u.access_code)}</td>
       <td><strong>${ticketCount}</strong></td>
       <td>${subjectBadges}</td>

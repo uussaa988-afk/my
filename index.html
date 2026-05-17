@@ -928,7 +928,7 @@ renderHome();
 /* ===== RAFFLE SYSTEM ===== */
 const RAFFLE_API = 'https://my-production-c42f.up.railway.app';
 const RAFFLE_BLOCKS = 12;
-const RAFFLE_QUESTION_TIME = 30;
+const RAFFLE_QUESTION_TIME = 20;
 const RAFFLE_SUBJECTS = {
   biochem: { name: 'Биохимия', key: 'biochem' },
   physiology: { name: 'Нормальная физиология', key: 'physiology' }
@@ -943,6 +943,9 @@ let raffleAnswers = {};
 let raffleSubmitting = false;
 let raffleTimerInterval = null;
 let raffleTimerSec = RAFFLE_QUESTION_TIME;
+let raffleStoppedTimers = {};
+let raffleTestStartTime = null;
+let raffleTestEndTime = null;
 
 function getRaffleUser() {
   try { return JSON.parse(localStorage.getItem('raffleUser') || 'null'); } catch { return null; }
@@ -1038,6 +1041,7 @@ function startRaffleTimer() {
 }
 
 function raffleAutoSkip() {
+  raffleStoppedTimers[raffleIdx] = 0;
   if (raffleAnswers[raffleIdx] === undefined) {
     raffleAnswers[raffleIdx] = -1;
   }
@@ -1093,10 +1097,11 @@ function renderRaffle() {
     title.textContent = 'Регистрация';
     content.innerHTML = `
       <div class="raffle-info">
-        <strong>Введите ваш ник:</strong> После регистрации вы получите код доступа для входа с любого устройства.
+        <strong>Введите ваши данные:</strong> После регистрации вы получите код доступа для входа с любого устройства.
       </div>
       <div class="nickname-form">
         <input type="text" id="raffle-nickname-input" placeholder="Ваш ник" maxlength="30" class="nick-input">
+        <input type="tel" id="raffle-phone-input" placeholder="Номер телефона" maxlength="20" class="nick-input" style="margin-top:12px">
         <button class="btn btn-primary" id="raffle-register-btn" onclick="submitRaffleRegister()">Зарегистрироваться</button>
         <div class="nick-error" id="nick-error"></div>
       </div>
@@ -1208,8 +1213,14 @@ async function submitRaffleRegister() {
   const input = document.getElementById('raffle-nickname-input');
   const btn = document.getElementById('raffle-register-btn');
   const nick = (input.value || '').trim();
+  const phoneInput = document.getElementById('raffle-phone-input');
+  const phone = (phoneInput.value || '').trim();
   if (!nick || nick.length < 2) {
     document.getElementById('nick-error').textContent = 'Ник должен быть не менее 2 символов';
+    return;
+  }
+  if (!phone || phone.length < 5) {
+    document.getElementById('nick-error').textContent = 'Введите номер телефона';
     return;
   }
   btn.disabled = true;
@@ -1218,7 +1229,7 @@ async function submitRaffleRegister() {
     const resp = await fetch(RAFFLE_API + '/api/users/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nickname: nick })
+      body: JSON.stringify({ nickname: nick, phone: phone })
     });
     const data = await resp.json();
     if (!resp.ok) {
@@ -1323,8 +1334,11 @@ function startRaffleBlock(blockIdx) {
   raffleQuestions = shuffleArray(blocks[blockIdx].map((q, i) => ({ ...q, _idx: i })));
   raffleIdx = 0;
   raffleAnswers = {};
+  raffleStoppedTimers = {};
   raffleSubmitting = false;
   raffleState = 'quiz';
+  raffleTestStartTime = new Date().toISOString();
+  raffleTestEndTime = null;
   renderRaffleQuiz();
 }
 
@@ -1364,9 +1378,9 @@ function renderRaffleQuiz() {
   const isLastAnswered = answered && raffleIdx === total - 1;
 
   content.innerHTML = `
-    <div class="raffle-timer-bar" id="raffle-timer-container" ${answered ? 'style="display:none"' : ''}>
-      <div class="timer-progress"><span id="raffle-timer-bar-fill" style="width:100%;background:var(--green)"></span></div>
-      <span class="timer-text" id="raffle-timer-text" style="color:var(--green)">${RAFFLE_QUESTION_TIME}с</span>
+    <div class="raffle-timer-bar" id="raffle-timer-container">
+      <div class="timer-progress"><span id="raffle-timer-bar-fill" style="width:${answered ? (raffleStoppedTimers[raffleIdx] !== undefined ? Math.max(0, raffleStoppedTimers[raffleIdx] / RAFFLE_QUESTION_TIME * 100) : 0) : 100}%;background:${answered ? (raffleStoppedTimers[raffleIdx] > 10 ? 'var(--green)' : raffleStoppedTimers[raffleIdx] > 5 ? 'var(--yellow)' : 'var(--red)') : 'var(--green)'}"></span></div>
+      <span class="timer-text" id="raffle-timer-text" style="color:${answered ? (raffleStoppedTimers[raffleIdx] > 10 ? 'var(--green)' : raffleStoppedTimers[raffleIdx] > 5 ? 'var(--yellow)' : 'var(--red)') : 'var(--green)'}">${answered ? (raffleStoppedTimers[raffleIdx] !== undefined ? raffleStoppedTimers[raffleIdx] + 'с' : '0с') : RAFFLE_QUESTION_TIME + 'с'}</span>
     </div>
     <div class="progress-top"><span style="width:${progressPct}%"></span></div>
     <div class="q-card no-copy">
@@ -1374,7 +1388,7 @@ function renderRaffleQuiz() {
       <div class="options">${optionsHtml}</div>
     </div>
     <div class="nav-row">
-      <button class="btn btn-outline" ${raffleIdx > 0 ? `onclick="rafflePrevQ()"` : 'style="visibility:hidden"'}>&larr; Назад</button>
+      <span></span>
       ${isLastAnswered ? `<button class="btn btn-primary" id="raffle-finish-btn" onclick="raffleFinish()">Завершить</button>` : `<button class="btn btn-primary" onclick="raffleNextQ()">Далее &rarr;</button>`}
     </div>
   `;
@@ -1385,6 +1399,7 @@ function renderRaffleQuiz() {
 }
 
 function raffleSelectOption(oi) {
+  raffleStoppedTimers[raffleIdx] = raffleTimerSec;
   stopRaffleTimer();
   raffleAnswers[raffleIdx] = oi;
   renderRaffleQuiz();
@@ -1437,7 +1452,9 @@ async function raffleFinish() {
         device_info: deviceInfo,
         fingerprint: fingerprint,
         nickname: nickname,
-        access_code: accessCode
+        access_code: accessCode,
+        started_at: raffleTestStartTime,
+        finished_at: new Date().toISOString()
       })
     });
     const data = await resp.json();
