@@ -72,10 +72,13 @@ class TicketRequest(BaseModel):
     fingerprint: str
     nickname: str = ""
     access_code: str = ""
+    started_at: str = ""
+    finished_at: str = ""
 
 
 class RegisterRequest(BaseModel):
     nickname: str
+    phone: str = ""
 
 
 class LoginRequest(BaseModel):
@@ -95,9 +98,14 @@ async def register_user(req: RegisterRequest):
                 return JSONResponse(status_code=409, content={"error": "Этот ник уже занят"})
 
         access_code = _generate_access_code()
+        phone = req.phone.strip()
+        if len(phone) < 5:
+            return JSONResponse(status_code=400, content={"error": "Введите номер телефона"})
+
         user = {
             "id": f"U-{secrets.token_hex(4).upper()}",
             "nickname": nick,
+            "phone": phone,
             "access_code": access_code,
             "registered_at": datetime.now().isoformat(),
         }
@@ -159,6 +167,8 @@ async def issue_ticket(ticket_req: TicketRequest, request: Request):
             "access_code": ticket_req.access_code,
             "ip": ip,
             "issued_at": datetime.now().isoformat(),
+            "started_at": ticket_req.started_at,
+            "finished_at": ticket_req.finished_at,
         }
 
         tickets.append(ticket)
