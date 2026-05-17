@@ -432,8 +432,26 @@ body {
   padding: 10px 16px;
   border: 1px solid var(--border);
   border-radius: 10px;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   background: rgba(255,255,255,0.02);
+}
+.raffle-logout-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.2);
+  color: var(--gray);
+  font-size: 0.8rem;
+  padding: 4px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.3s;
+}
+.raffle-logout-btn:hover {
+  background: rgba(232, 86, 86, 0.15);
+  border-color: var(--red);
+  color: var(--red);
 }
 
 .hidden{display:none!important}
@@ -957,6 +975,12 @@ function clearRaffleUser() {
   localStorage.removeItem('raffleUser');
 }
 
+function raffleLogout() {
+  clearRaffleUser();
+  raffleState = 'welcome';
+  renderRaffle();
+}
+
 function getRaffleBlocks(subjectKey) {
   const allQuestions = [];
   SUBJECTS[subjectKey].data.forEach(sec => {
@@ -1166,9 +1190,9 @@ function renderRaffle() {
 
     content.innerHTML = `
       <div class="raffle-info">
-        <strong>Как это работает:</strong> Выберите предмет, пройдите блок вопросов (~100 шт.) с результатом <strong>больше 90%</strong> и получите билет для розыгрыша. На каждый вопрос даётся <strong>30 секунд</strong>.
+        <strong>Как это работает:</strong> Выберите предмет, пройдите блок вопросов (~100 шт.) с результатом <strong>больше 90%</strong> и получите билет для розыгрыша. На каждый вопрос даётся <strong>20 секунд</strong>.
       </div>
-      <div class="raffle-nickname-display">👤 Ник: <strong>${escHtml(user ? user.nickname : '')}</strong></div>
+      <div class="raffle-nickname-display">👤 Ник: <strong>${escHtml(user ? user.nickname : '')}</strong><button class="raffle-logout-btn" onclick="raffleLogout()">Выйти</button></div>
       <div class="raffle-subject-grid">
         <div class="raffle-subject-card" onclick="selectRaffleSubject('biochem')">
           <h3>Биохимия</h3>
@@ -1191,7 +1215,7 @@ function renderRaffle() {
     const progress = getRaffleProgress();
     const subProgress = progress[raffleSubject] || {};
 
-    let html = `<div class="raffle-info">Выберите блок для прохождения. Каждый блок можно пройти только <strong>один раз</strong>. На каждый вопрос — <strong>30 секунд</strong>. Копирование текста отключено.</div>`;
+    let html = `<div class="raffle-info">Выберите блок для прохождения. Каждый блок можно пройти только <strong>один раз</strong>. На каждый вопрос — <strong>20 секунд</strong>. Копирование текста отключено.</div>`;
     html += '<div class="raffle-block-grid">';
     blocks.forEach((block, i) => {
       const isCompleted = subProgress[i] !== undefined;
