@@ -951,8 +951,7 @@ const RAFFLE_BLOCKS = 12;
 const RAFFLE_QUESTION_TIME = 20;
 const RAFFLE_SUBJECTS = {
   biochem: { name: 'Биохимия', key: 'biochem' },
-  physiology: { name: 'Нормальная физиология', key: 'physiology' },
-  hygiene: { name: 'Гигиена', key: 'hygiene' }
+  physiology: { name: 'Нормальная физиология', key: 'physiology' }
 };
 
 let raffleState = 'welcome';
@@ -1205,10 +1204,7 @@ function renderRaffle() {
           <h3>Нормальная физиология</h3>
           <div class="meta">${SUBJECTS.physiology.data.reduce((s,sec)=>s+sec.questions.length,0)} вопросов • 12 блоков</div>
         </div>
-        <div class="raffle-subject-card" onclick="selectRaffleSubject('hygiene')">
-          <h3>Гигиена</h3>
-          <div class="meta">${SUBJECTS.hygiene.data.reduce((s,sec)=>s+sec.questions.length,0)} вопросов • 12 блоков</div>
-        </div>
+
       </div>
       <div style="text-align:center;margin-bottom:24px">
         <button class="btn btn-outline" onclick="showLeaderboard()">Рейтинг участников</button>
