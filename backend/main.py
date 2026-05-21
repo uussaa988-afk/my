@@ -124,7 +124,8 @@ async def login_user(req: LoginRequest):
             if u["access_code"] == code:
                 tickets = load_tickets()
                 user_tickets = [t for t in tickets if t.get("access_code") == code]
-                return {"status": "ok", "user": u, "tickets": user_tickets}
+                user_data = {**u, "phone": u.get("phone", "")}
+                return {"status": "ok", "user": user_data, "tickets": user_tickets}
     return JSONResponse(status_code=404, content={"error": "Неверный код доступа"})
 
 
@@ -208,6 +209,7 @@ async def get_users(authorization: str | None = Header(default=None)):
         user_tickets = [t for t in tickets if t.get("access_code") == u["access_code"]]
         result.append({
             **u,
+            "phone": u.get("phone", ""),
             "tickets_count": len(user_tickets),
             "tickets": user_tickets,
         })
