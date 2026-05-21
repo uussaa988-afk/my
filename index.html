@@ -765,7 +765,12 @@ function renderSubjectTabs() {
     const tab = document.createElement('div');
     tab.className = 'subject-tab' + (key === currentSubject ? ' active' : '');
     tab.innerHTML = `${subj.name}<span class="count">${total}</span>`;
-    tab.onclick = () => { currentSubject = key; renderSubjectTabs(); renderHome(); };
+    tab.onclick = () => {
+      currentSubject = key;
+      c.querySelectorAll('.subject-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderHome();
+    };
     c.appendChild(tab);
   }
 }
