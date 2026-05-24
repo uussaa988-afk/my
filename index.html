@@ -654,6 +654,10 @@ body {
         <span class="toggle-label">Перемешивать вопросы</span>
         <div class="toggle-switch"></div>
       </div>
+      <div class="toggle-bar" id="auto-advance-toggle" onclick="toggleAutoAdvance()">
+        <span class="toggle-label">Автопереход</span>
+        <div class="toggle-switch"></div>
+      </div>
       <div class="section-grid" id="section-grid"></div>
       <div class="reset-row" id="reset-area" style="display:none; text-align:center;">
         <button class="pill-btn outline" onclick="resetProgress()" style="margin-top: 24px;">Reset Progress</button>
@@ -712,6 +716,7 @@ let timerSeconds = 0;
 let timerTotal = 0;
 let sectionIdx = -1;
 let randomOrder = false;
+let autoAdvance = false;
 
 function DATA() { return SUBJECTS[currentSubject].data; }
 function storageKey() { return 'quizProgress_' + currentSubject; }
@@ -833,6 +838,11 @@ function toggleRandomOrder() {
   const el = document.getElementById('shuffle-toggle');
   if (el) el.className = 'toggle-bar' + (randomOrder ? ' active' : '');
 }
+function toggleAutoAdvance() {
+  autoAdvance = !autoAdvance;
+  const el = document.getElementById('auto-advance-toggle');
+  if (el) el.className = 'toggle-bar' + (autoAdvance ? ' active' : '');
+}
 function startSection(i) { sectionIdx = i; mode = 'section'; quizQuestions = DATA()[i].questions.map(q => ({ ...q, secIdx: i })); if (randomOrder) quizQuestions = shuffle(quizQuestions); startQuiz(); }
 function startAllRandom() { sectionIdx = -1; mode = 'all_random'; const all = []; DATA().forEach((sec, i) => sec.questions.forEach(q => all.push({ ...q, secIdx: i }))); quizQuestions = shuffle(all); startQuiz(); }
 function startAll() { sectionIdx = -1; mode = 'all'; const all = []; DATA().forEach((sec, i) => sec.questions.forEach(q => all.push({ ...q, secIdx: i }))); quizQuestions = shuffle(all).slice(0, 60); timerSeconds = 60 * 60; timerTotal = 60 * 60; startQuiz(); timerInterval = setInterval(tickTimer, 1000); }
@@ -932,6 +942,11 @@ function selectOption(oi) {
   answers[currentIdx] = oi;
   saveProgress(q.secIdx, q.id, oi === q._shuffledCorrect);
   renderQuestion();
+  if (autoAdvance) {
+    setTimeout(() => {
+      if (currentIdx < quizQuestions.length - 1) { nextQ(); } else { showResults(); }
+    }, 400);
+  }
 }
 
 function nextQ() { if (currentIdx < quizQuestions.length - 1) { currentIdx++; renderQuestion(); scrollTop(); } }
